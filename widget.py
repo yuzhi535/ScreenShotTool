@@ -12,7 +12,9 @@ brush_color = QColor(128, 128, 255, 100)
 
 
 class ScreenShotWidget(QWidget):
-    def __init__(self, app: QApplication, width: int, height: int):
+    def __init__(self, app: QApplication, width: float, height: float):
+        self.deviceWidth = width
+        self.deviceHeight = height
         super(ScreenShotWidget, self).__init__()
         self.setGeometry(0, 0, width, height)
         self.setWindowFlags(Qt.FramelessWindowHint)
@@ -25,11 +27,13 @@ class ScreenShotWidget(QWidget):
         self.beginY = .0
         self.endX = .0
         self.endY = .0
+        self.moveX = self.moveY = .0
         self.isPopup = False
         QApplication.setOverrideCursor(QCursor(Qt.CrossCursor))
 
         self.exitShortCut = QShortcut(QKeySequence("Escape"), self)
         self.exitShortCut.activated.connect(self.escEvent)
+        self.isMove = False
 
     @Slot()
     def escEvent(self):
@@ -81,12 +85,6 @@ class ScreenShotWidget(QWidget):
         QApplication.setOverrideCursor(QCursor(Qt.ArrowCursor))
         self.hide()
 
-    def mouseMoveEvent(self, e: QMouseEvent):
-        if not self.isReleased:
-            self.endX = e.position().x()
-            self.endY = e.position().y()
-            self.update()
-
     @Slot()
     def saveToFile(self):
         self.setWindowOpacity(0)
@@ -99,14 +97,9 @@ class ScreenShotWidget(QWidget):
         pix = screen.grabWindow(0, x, y, xDis, yDis)
         self.hide()
         # set default filename
-        filename, _ = QFileDialog.getSaveFileName(self, caption="choose location and file name",
-                                                  dir=QDateTime.currentDateTime().toString("yyyy-MM-dd HH:mm:ss"),
-                                                  filter="PNG(*.png);; JPEG(*.jpg)")
+        filename = QDateTime.currentDateTime().toString("yyyy-MM-dd-HH-mm-ss")
 
-        if filename[-3:] == "png":
-            pix.save(filename, "png")
-        elif filename[-3:] == "jpg":
-            pix.save(filename, "jpg")
+        pix.save(filename + ".png", "png")
         self.isPopup = False
         self.beginY = self.beginX = self.endY = self.endX = 0
         self.update()
@@ -130,13 +123,43 @@ class ScreenShotWidget(QWidget):
             self.isPopup = True
         else:
             self.isReleased = True
+            self.isMove = False
             QApplication.setOverrideCursor(QCursor(Qt.CrossCursor))
+
+    def mouseMoveEvent(self, e: QMouseEvent) -> None:
+        if self.isMove:
+            x = e.position().x()
+            y = e.position().y()
+            xDis = x-self.moveX
+            yDis = y-self.moveY
+            if min(self.beginX, self.endX)+xDis > 0 and min(self.beginY,self.endY) + yDis > 0 \
+                    and max(self.beginX, self.endX) + xDis < self.deviceWidth and max(self.beginY,self.endY)+yDis < self.deviceHeight:
+                self.beginX += x-self.moveX
+                self.beginY += y - self.moveY
+                self.endX += x-self.moveX
+                self.endY += y - self.moveY
+                self.moveX = x
+                self.moveY = y
+                self.update()
+
+        elif not self.isReleased:
+            self.endX = e.position().x()
+            self.endY = e.position().y()
+            self.update()
 
     def mousePressEvent(self, e: QMouseEvent):
         if e.button() == Qt.LeftButton and not self.isPopup:
             self.isReleased = False
-            self.endX = self.beginX = e.position().x()
-            self.endY = self.beginY = e.position().y()
+            if min(self.beginX, self.endX) <= e.position().x() <= max(self.beginX, self.endX) and min(self.beginY, self.endY) <= e.position().y() <= max(self.beginY, self.endY):
+                if not self.isMove:
+                    self.isMove = True
+                    self.moveX = e.position().x()
+                    self.moveY = e.position().y()
+                    # print(self.moveX, self.moveY)
+
+            else:
+                self.endX = self.beginX = e.position().x()
+                self.endY = self.beginY = e.position().y()
             self.update()
         self.isPopup = False
 
@@ -156,6 +179,11 @@ class MainWindow(QWidget):
         QApplication.setOverrideCursor(Qt.CrossCursor)
 
 
+@Slot()
+def showScreenShotWindow():
+    window.show(), QApplication.setOverrideCursor(Qt.CrossCursor)
+
+
 if __name__ == "__main__":
     app = QApplication([])
     icon = QIcon("./assets/img/icon.png")
@@ -173,10 +201,9 @@ if __name__ == "__main__":
     tray.setContextMenu(menu)
     tray.show()
 
-    curr_size = QGuiApplication.primaryScreen().size()
+    curr_size = QApplication.primaryScreen().size()
     window = ScreenShotWidget(app, curr_size.width(), curr_size.height())
-    showWindow.triggered.connect(
-        lambda: (window.show(), QApplication.setOverrideCursor(Qt.CrossCursor)))
+    showWindow.triggered.connect(showScreenShotWindow)
 
     # showWindow.setShortcut(QKeySequence("Ctrl+Shift+A"))
 
