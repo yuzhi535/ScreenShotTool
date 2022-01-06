@@ -33,7 +33,8 @@ class ScreenShotWidget(QWidget):
         qp = QPainter(self)
         qp.setPen(QPen(QColor('green'), 3))
         qp.setBrush(brush_color)
-        rect = QRectF(self.beginX, self.beginY, self.endX - self.beginX, self.endY - self.beginY)
+        rect = QRectF(self.beginX, self.beginY, self.endX -
+                      self.beginX, self.endY - self.beginY)
         qp.drawRect(rect)
         qp.fillRect(rect, grey_color)
 
@@ -88,7 +89,9 @@ class ScreenShotWidget(QWidget):
         yDis = re[3]
         pix = screen.grabWindow(0, x, y, xDis, yDis)
         self.hide()
+        # set default filename
         filename, _ = QFileDialog.getSaveFileName(self, caption="choose location and file name",
+                                                  dir=QDateTime.currentDateTime().toString("yyyy-MM-dd HH:mm:ss"),
                                                   filter="PNG(*.png);; JPEG(*.jpg)")
 
         if filename[-3:] == "png":
@@ -162,7 +165,8 @@ if __name__ == "__main__":
 
     curr_size = QGuiApplication.primaryScreen().size()
     window = ScreenShotWidget(app, curr_size.width(), curr_size.height())
-    showWindow.triggered.connect(lambda: (window.show(), QApplication.setOverrideCursor(Qt.CrossCursor)))
+    showWindow.triggered.connect(
+        lambda: (window.show(), QApplication.setOverrideCursor(Qt.CrossCursor)))
 
     showWindow.setShortcut(QKeySequence("Ctrl+Shift+A"))
 
