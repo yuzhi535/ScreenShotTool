@@ -6,8 +6,8 @@ from PySide6.QtGui import QColor, QGuiApplication, QPixmap, QAction, QIcon, QMou
     QCursor, QScreen, QShortcut, QKeySequence
 from PySide6.QtWidgets import QApplication, QWidget, QLabel, QSystemTrayIcon, QMenu, QFileDialog, QPushButton
 
-grey_color = QColor(0, 0, 0, 200)
-white_color = QColor(160, 160, 160, 200)
+grey_color = QColor(0, 0, 0, 255)
+white_color = QColor(60, 60, 60, 20)
 brush_color = QColor(128, 128, 255, 100)
 
 
@@ -28,10 +28,19 @@ class ScreenShotWidget(QWidget):
         self.isPopup = False
         QApplication.setOverrideCursor(QCursor(Qt.CrossCursor))
 
+        self.exitShortCut = QShortcut(QKeySequence("Escape"), self)
+        self.exitShortCut.activated.connect(self.escEvent)
+
+    @Slot()
+    def escEvent(self):
+        self.beginX = self.beginY = self.endX = self.endY = .0
+        self.update()
+        self.hide()
+
     def paintEvent(self, e: QPaintEvent) -> None:
         self.setWindowOpacity(.3)
         qp = QPainter(self)
-        qp.setPen(QPen(QColor('green'), 3))
+        qp.setPen(QPen(QColor(255, 0, 0, 0), 3))
         qp.setBrush(brush_color)
         rect = QRectF(self.beginX, self.beginY, self.endX -
                       self.beginX, self.endY - self.beginY)
@@ -81,7 +90,7 @@ class ScreenShotWidget(QWidget):
     @Slot()
     def saveToFile(self):
         self.setWindowOpacity(0)
-        screen = QApplication.primaryScreen()
+        screen = QGuiApplication.primaryScreen()
         re = self.computeRect()
         x = re[0]
         y = re[1]
@@ -98,10 +107,11 @@ class ScreenShotWidget(QWidget):
             pix.save(filename, "png")
         elif filename[-3:] == "jpg":
             pix.save(filename, "jpg")
+        self.isPopup = False
         self.beginY = self.beginX = self.endY = self.endX = 0
         self.update()
-        QApplication.setOverrideCursor(QCursor(Qt.CrossCursor))
-        self.isPopup = False
+        QApplication.setOverrideCursor(QCursor(Qt.ArrowCursor))
+        self.hide()
 
     def mouseReleaseEvent(self, e: QMouseEvent) -> None:
         if e.button() == Qt.RightButton:
@@ -168,11 +178,11 @@ if __name__ == "__main__":
     showWindow.triggered.connect(
         lambda: (window.show(), QApplication.setOverrideCursor(Qt.CrossCursor)))
 
-    showWindow.setShortcut(QKeySequence("Ctrl+Shift+A"))
+    # showWindow.setShortcut(QKeySequence("Ctrl+Shift+A"))
 
     window.resize(curr_size.width(), curr_size.height())
-    mainWindow = MainWindow(window)
-    window.hide()
-    mainWindow.show()
+    # mainWindow = MainWindow(window)
+    # window.hide()
+    # mainWindow.show()
     QApplication.setOverrideCursor(Qt.ArrowCursor)
     sys.exit(app.exec())
