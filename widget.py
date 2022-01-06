@@ -28,6 +28,7 @@ class ScreenShotWidget(QWidget):
         self.endX = .0
         self.endY = .0
         self.moveX = self.moveY = .0
+        self.xDis = self.yDis = .0
         self.isPopup = False
         QApplication.setOverrideCursor(QCursor(Qt.CrossCursor))
 
@@ -137,25 +138,31 @@ class ScreenShotWidget(QWidget):
 
     def mouseMoveEvent(self, e: QMouseEvent) -> None:
         if self.isMove:
+            self.xDis = self.endX - self.beginX
+            self.yDis = self.endY - self.beginY
             x = e.position().x()
             y = e.position().y()
             xDis = x - self.moveX
             yDis = y - self.moveY
-            if self.beginX + xDis >= 0 and self.beginY + yDis >= 0 \
-                    and self.endX + xDis <= self.deviceWidth and \
-                    self.endY + yDis <= self.deviceHeight:
-                self.beginX += xDis
-                self.beginY += yDis
-                self.endX += xDis
-                self.endY += yDis
-            elif self.beginX + xDis < 0:
+            self.beginX += xDis
+            self.beginY += yDis
+            self.endX += xDis
+            self.endY += yDis
+
+            print(f'dis={self.endX - self.beginX, self.endY - self.beginY}')
+            if self.beginX < 0:
                 self.beginX = 0
-            elif self.endX + xDis > self.deviceWidth:
-                self.endX = self.deviceWidth
-            elif self.beginY + yDis < 0:
+                self.endX = self.xDis
+            if self.beginY < 0:
                 self.beginY = 0
-            elif self.endY + yDis > self.deviceHeight:
+                self.endY = self.yDis
+            if self.endX > self.deviceWidth:
+                self.endX = self.deviceWidth
+                self.beginX = self.endX - self.xDis
+            if self.endY > self.deviceHeight:
                 self.endY = self.deviceHeight
+                self.beginY = self.endY - self.yDis
+
             self.moveX = x
             self.moveY = y
             self.update()
