@@ -130,17 +130,18 @@ class ScreenShotWidget(QWidget):
         if self.isMove:
             x = e.position().x()
             y = e.position().y()
-            xDis = x-self.moveX
-            yDis = y-self.moveY
-            if min(self.beginX, self.endX)+xDis > 0 and min(self.beginY,self.endY) + yDis > 0 \
-                    and max(self.beginX, self.endX) + xDis < self.deviceWidth and max(self.beginY,self.endY)+yDis < self.deviceHeight:
-                self.beginX += x-self.moveX
+            xDis = x - self.moveX
+            yDis = y - self.moveY
+            if min(self.beginX, self.endX) + xDis > 0 and min(self.beginY, self.endY) + yDis > 0 \
+                    and max(self.beginX, self.endX) + xDis < self.deviceWidth and \
+                    max(self.beginY, self.endY) + yDis < self.deviceHeight:
+                self.beginX += x - self.moveX
                 self.beginY += y - self.moveY
-                self.endX += x-self.moveX
+                self.endX += x - self.moveX
                 self.endY += y - self.moveY
-                self.moveX = x
-                self.moveY = y
-                self.update()
+            self.moveX = x
+            self.moveY = y
+            self.update()
 
         elif not self.isReleased:
             self.endX = e.position().x()
@@ -150,7 +151,9 @@ class ScreenShotWidget(QWidget):
     def mousePressEvent(self, e: QMouseEvent):
         if e.button() == Qt.LeftButton and not self.isPopup:
             self.isReleased = False
-            if min(self.beginX, self.endX) <= e.position().x() <= max(self.beginX, self.endX) and min(self.beginY, self.endY) <= e.position().y() <= max(self.beginY, self.endY):
+            if min(self.beginX, self.endX) <= e.position().x() <= max(self.beginX, self.endX) and min(self.beginY,
+                                                                                                      self.endY) <= e.position().y() <= max(
+                self.beginY, self.endY):
                 if not self.isMove:
                     self.isMove = True
                     self.moveX = e.position().x()
@@ -208,8 +211,8 @@ if __name__ == "__main__":
     # showWindow.setShortcut(QKeySequence("Ctrl+Shift+A"))
 
     window.resize(curr_size.width(), curr_size.height())
-    # mainWindow = MainWindow(window)
-    # window.hide()
-    # mainWindow.show()
+    mainWindow = MainWindow(window)
+    window.hide()
+    mainWindow.show()
     QApplication.setOverrideCursor(Qt.ArrowCursor)
     sys.exit(app.exec())
