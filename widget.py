@@ -4,7 +4,8 @@ import sys
 from PySide6.QtCore import *
 from PySide6.QtGui import QColor, QGuiApplication, QPixmap, QAction, QIcon, QMouseEvent, QPaintEvent, QPainter, QPen, \
     QCursor, QScreen, QShortcut, QKeySequence
-from PySide6.QtWidgets import QApplication, QWidget, QLabel, QSystemTrayIcon, QMenu, QFileDialog, QPushButton
+from PySide6.QtWidgets import QApplication, QWidget, QLabel, QSystemTrayIcon, QMenu, QFileDialog, QPushButton, \
+    QGridLayout
 
 grey_color = QColor(0, 0, 0, 255)
 white_color = QColor(60, 60, 60, 20)
@@ -149,7 +150,6 @@ class ScreenShotWidget(QWidget):
             self.endX += xDis
             self.endY += yDis
 
-            print(f'dis={self.endX - self.beginX, self.endY - self.beginY}')
             if self.beginX < 0:
                 self.beginX = 0
                 self.endX = self.xDis
@@ -181,7 +181,8 @@ class ScreenShotWidget(QWidget):
                     self.isMove = True
                     self.moveX = e.position().x()
                     self.moveY = e.position().y()
-                    # print(self.moveX, self.moveY)
+
+
 
             else:
                 self.endX = self.beginX = e.position().x()
@@ -191,12 +192,25 @@ class ScreenShotWidget(QWidget):
 
 
 class MainWindow(QWidget):
-    def __init__(self, window):
+    def __init__(self, window, screen_size):
         super(MainWindow, self).__init__()
-        self.rectBtn = QPushButton("rect shot", self)
+        layout = QGridLayout()
+        self.screen_size = screen_size
+
+        self.setLayout(layout)
+
+        self.rectBtn = QPushButton("rect shot")
+        self.windowBtn = QPushButton("all window")
         self.rectBtn.show()
+        self.windowBtn.show()
+        layout.addWidget(self.rectBtn, 1, 1, 2, 4)
+        layout.addWidget(self.windowBtn, 1, 5, 2, 4)
         self.screenWindow = window
         self.rectBtn.clicked.connect(self.showWindow)
+
+    def sizeHint(self) -> QSize:
+        return QSize(.6 * self.screen_size.width(), .6 * self.screen_size.height())
+        pass
 
     @Slot()
     def showWindow(self):
@@ -207,7 +221,7 @@ class MainWindow(QWidget):
 
 @Slot()
 def showScreenShotWindow():
-    window.show(), QApplication.setOverrideCursor(Qt.CrossCursor)
+    mainWindow.show()
 
 
 if __name__ == "__main__":
@@ -228,14 +242,14 @@ if __name__ == "__main__":
     tray.show()
 
     curr_size = QApplication.primaryScreen().size()
-    window = ScreenShotWidget(app, curr_size.width(), curr_size.height())
-    showWindow.triggered.connect(showScreenShotWindow)
+    screenSizeWindow = ScreenShotWidget(app, curr_size.width(), curr_size.height())
 
     # showWindow.setShortcut(QKeySequence("Ctrl+Shift+A"))
 
-    window.resize(curr_size.width(), curr_size.height())
-    mainWindow = MainWindow(window)
-    window.hide()
+    screenSizeWindow.resize(curr_size.width(), curr_size.height())
+    mainWindow = MainWindow(screenSizeWindow, curr_size)
+    showWindow.triggered.connect(showScreenShotWindow)
+    screenSizeWindow.hide()
     mainWindow.show()
     QApplication.setOverrideCursor(Qt.ArrowCursor)
     sys.exit(app.exec())
